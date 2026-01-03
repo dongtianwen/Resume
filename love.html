@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中场重构者 - 灵魂匹配系统</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Lucide React Icons (simplified versions)
+        const Compass = ({ className, strokeWidth }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+        );
+
+        const ArrowRight = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+            </svg>
+        );
+
+        const Shield = ({ className, strokeWidth }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        );
+
+        const AlertCircle = ({ className, strokeWidth }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        );
+
+        const Sparkles = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M12 3v18M3 12h18M7.5 7.5l9 9M16.5 7.5l-9 9"/>
+            </svg>
+        );
+
+        const Award = ({ className, strokeWidth }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="7"/>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+        );
+
+        const RebuildersMirrorV3 = () => {
+            const [stage, setStage] = useState('intro');
+            const [answers, setAnswers] = useState({});
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [fadeIn, setFadeIn] = useState(false);
+
+            useEffect(() => {
+                setFadeIn(true);
+            }, [stage]);
+
+            const questionsData = [
+                {
+                    id: 'logic_emotion',
+                    dimension: '性格对冲',
+                    text: '当另一半在讨论问题时表现出极强的逻辑压制（即便他是对的），你会？',
+                    story: '智识的锋芒有时会伤人，但也可能成为思想的碰撞。',
+                    options: [
+                        { text: '欣赏这种智力美感，并客观回应', score: 10 },
+                        { text: '理解他的思维方式，但会提醒他注意方式', score: 7 },
+                        { text: '感到被忽视，需要先处理情绪', score: 2 },
+                        { text: '这会让我感到不被尊重', score: 0 }
+                    ]
+                },
+                {
+                    id: 'divergent_focus',
+                    dimension: '性格对冲',
+                    text: '面对一个想法极多、经常"不安分"的伴侣，你更倾向于？',
+                    story: '创造者的灵魂永远在寻找下一个可能性。',
+                    options: [
+                        { text: '成为他的锚点，帮他把想法落地', score: 10 },
+                        { text: '陪他一起探索，在实践中磨合', score: 7 },
+                        { text: '陪他一起天马行空，但不负责执行', score: 5 },
+                        { text: '希望他能更专注和稳定', score: 2 }
+                    ]
+                },
+                {
+                    id: 'conflict_resolution',
+                    dimension: '性格对冲',
+                    text: '激烈的辩论后，你通常如何恢复关系？',
+                    story: '真正的亲密，是能在风暴后依然携手的能力。',
+                    options: [
+                        { text: '冷静复盘，对事不对人，理性沟通', score: 10 },
+                        { text: '给彼此空间冷静后再谈', score: 7 },
+                        { text: '需要情感抚慰和肯定', score: 3 },
+                        { text: '等待对方先道歉和哄自己', score: 2 }
+                    ]
+                },
+                {
+                    id: 'achievement_definition',
+                    dimension: '逆境韧性',
+                    text: '你认为一个男人的价值更多体现在？',
+                    story: '英雄不是从不跌倒，而是每次跌倒后都能重新站起。',
+                    options: [
+                        { text: '无论身处何种低谷，都有推倒重建的勇气', score: 10 },
+                        { text: '在困境中保持尊严和责任心', score: 8 },
+                        { text: '能给家庭提供基本的稳定', score: 5 },
+                        { text: '持续稳定的社会地位和财富积累', score: 3 }
+                    ]
+                },
+                {
+                    id: 'risk_sharing',
+                    dimension: '逆境韧性',
+                    text: '如果家庭收入面临暂时性的大幅缩水？',
+                    story: '共患难，方知谁是真正的同行者。',
+                    options: [
+                        { text: '愿意并肩开源节流，将其视为一种共同创业', score: 10 },
+                        { text: '可以接受，但需要看到明确的改善计划', score: 6 },
+                        { text: '会感到压力，但不会因此放弃关系', score: 3 },
+                        { text: '感到极度不安，生活质量不能下降', score: 0 }
+                    ]
+                },
+                {
+                    id: 'life_stage',
+                    dimension: '逆境韧性',
+                    text: '40岁之后，你最理想的生活状态是？',
+                    story: '中年不是终点，而是新征程的起点。',
+                    options: [
+                        { text: '寻找生命深处的意义，哪怕这意味着更多的挑战', score: 10 },
+                        { text: '在稳定与探索中寻找平衡', score: 7 },
+                        { text: '专注于家庭和内心的平静', score: 5 },
+                        { text: '守住已有的安稳，不再折腾', score: 3 }
+                    ]
+                },
+                {
+                    id: 'care_nature',
+                    dimension: '照护天性',
+                    text: '在你的生命经验里，照顾弱小的人会让你？',
+                    story: '爱的本质，是看见另一个生命的价值。',
+                    options: [
+                        { text: '感到一种被需要的深刻幸福和生命意义', score: 15 },
+                        { text: '感到责任重大，但愿意承担', score: 10 },
+                        { text: '偶尔可以，但需要平衡自己的空间', score: 5 },
+                        { text: '感到这是一种消耗，想要尽力规避', score: 0 }
+                    ]
+                },
+                {
+                    id: 'imperfection',
+                    dimension: '照护天性',
+                    text: '面对一个不完美、甚至有残缺的生命个体？',
+                    story: '完美是幻觉，接纳不完美才是真正的爱。',
+                    options: [
+                        { text: '我能看到他灵魂的独特性，并给予同样的尊严', score: 15 },
+                        { text: '需要时间建立连接，但我愿意尝试', score: 10 },
+                        { text: '我会感到同情，但需要评估自己的能力', score: 4 },
+                        { text: '我会感到同情，但难以想象与他长期共处', score: 2 }
+                    ]
+                },
+                {
+                    id: 'patience',
+                    dimension: '照护天性',
+                    text: '你的朋友通常如何评价你的耐心？',
+                    story: '耐心不是等待，而是在漫长中依然保持温柔的能力。',
+                    options: [
+                        { text: '极具定力，能在长期的琐碎中保持温柔', score: 10 },
+                        { text: '对重要的事情很有耐心', score: 7 },
+                        { text: '一般，取决于事情的重要性', score: 4 },
+                        { text: '情绪化较强，更喜欢快节奏的反馈', score: 2 }
+                    ]
+                },
+                {
+                    id: 'partnership_definition',
+                    dimension: '长期价值观',
+                    text: '你心目中最好的婚姻是？',
+                    story: '依附是本能，并肩是选择。',
+                    options: [
+                        { text: '两个独立灵魂的并肩作战', score: 10 },
+                        { text: '相互扶持，共同成长', score: 8 },
+                        { text: '彼此都是对方的依靠', score: 5 },
+                        { text: '温暖的避风港与被照顾者的关系', score: 2 }
+                    ]
+                },
+                {
+                    id: 'truth_timing',
+                    dimension: '长期价值观',
+                    text: '如果一个人在开始时向你隐瞒了困难，和在开始时坦诚困难，你选？',
+                    story: '真相可能沉重，但谎言更致命。',
+                    options: [
+                        { text: '坦诚，即便困难很大，这也是信任的基石', score: 10 },
+                        { text: '坦诚更好，但能理解为什么有人会选择隐瞒', score: 7 },
+                        { text: '取决于困难的程度', score: 3 },
+                        { text: '隐瞒，等感情深了再说，这样比较容易接受', score: 0 }
+                    ]
+                },
+                {
+                    id: 'life_legacy',
+                    dimension: '长期价值观',
+                    text: '你希望晚年回首时，自己留下的是？',
+                    story: '生命的价值不在长度，而在深度。',
+                    options: [
+                        { text: '我曾深刻地爱过并承担过责任', score: 10 },
+                        { text: '我活出了真实的自己', score: 8 },
+                        { text: '我拥有美好的回忆和温暖的关系', score: 6 },
+                        { text: '我曾轻松愉快地享受过生活', score: 5 }
+                    ]
+                }
+            ];
+
+            const shuffleOptions = (options) => {
+                const shuffled = [...options];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            };
+
+            const questions = useMemo(() => {
+                return questionsData.map(q => ({
+                    ...q,
+                    shuffledOptions: shuffleOptions(q.options)
+                }));
+            }, []);
+
+            const calculateResult = () => {
+                let totalScore = 0;
+                const maxScore = questions.reduce((sum, q) => sum + Math.max(...q.options.map(o => o.score)), 0);
+                
+                Object.values(answers).forEach(score => {
+                    totalScore += score;
+                });
+
+                const percentage = (totalScore / maxScore) * 100;
+                
+                let level = '';
+                let mbtiMatch = '';
+                
+                if (percentage >= 85) {
+                    level = '极高契合';
+                    mbtiMatch = 'INFJ / ISFJ / ENFJ';
+                } else if (percentage >= 70) {
+                    level = '稳健契合';
+                    mbtiMatch = 'INFP / ESFJ / ISFP';
+                } else if (percentage >= 60) {
+                    level = '需要深思';
+                    mbtiMatch = 'ENFP / ESFP';
+                } else {
+                    level = '低度契合';
+                    mbtiMatch = '--';
+                }
+
+                return {
+                    score: Math.round(percentage),
+                    totalScore: Math.round(totalScore),
+                    maxScore,
+                    level,
+                    mbtiMatch,
+                    qualified: percentage >= 70
+                };
+            };
+
+            const handleAnswer = (score) => {
+                setAnswers({ ...answers, [questions[currentQuestion].id]: score });
+                
+                if (currentQuestion < questions.length - 1) {
+                    setFadeIn(false);
+                    setTimeout(() => {
+                        setCurrentQuestion(currentQuestion + 1);
+                        setFadeIn(true);
+                    }, 300);
+                } else {
+                    setStage('reveal');
+                }
+            };
+
+            if (stage === 'intro') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-amber-950 via-zinc-900 to-stone-950 flex items-center justify-center p-6">
+                        <div className={`max-w-3xl w-full transition-opacity duration-1000 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className="text-center mb-12">
+                                <Compass className="w-24 h-24 text-amber-500 mx-auto mb-6 drop-shadow-lg" strokeWidth={1.2} />
+                                <h1 className="text-6xl font-bold text-amber-100 mb-4 tracking-wide">
+                                    中场重构者
+                                </h1>
+                                <p className="text-amber-400 text-sm tracking-[0.4em]">
+                                    THE REBUILDER'S MIRROR v3.0
+                                </p>
+                            </div>
+
+                            <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-12 border border-amber-800 border-opacity-20 shadow-2xl">
+                                <div className="space-y-7 text-zinc-300 leading-loose text-lg">
+                                    <p className="text-amber-300 font-medium text-2xl mb-8">
+                                        一场关于深度与韧性的对话
+                                    </p>
+                                    
+                                    <p>
+                                        世界上有两类人：一类追求确定性，希望生活按既定剧本展开；另一类拥抱不确定性，在混沌中重建秩序。
+                                    </p>
+                                    
+                                    <p>
+                                        我属于后者。ENTJ的决断让我在推倒重来时毫不犹豫，ENTP的灵动让我在废墟中看到新的架构。
+                                    </p>
+                                    
+                                    <p>
+                                        此刻，我处于人生的战略性重构期。不是失败，而是更高维度的重启。
+                                    </p>
+                                    
+                                    <p className="text-amber-300 pt-6 border-t border-amber-900 border-opacity-30 font-medium">
+                                        接下来的12个问题，将探测你的心理能量层级、韧性阈值，以及是否具备英雄主义情怀。
+                                    </p>
+                                    
+                                    <p className="text-amber-300 font-medium">
+                                        只有通过这场测评的人，才有资格了解我的全部真相。
+                                    </p>
+                                </div>
+
+                                <button 
+                                    onClick={() => setStage('questions')}
+                                    className="w-full mt-12 px-8 py-6 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-500 hover:via-amber-600 hover:to-amber-700 text-white rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-medium text-xl shadow-2xl"
+                                >
+                                    进入深度测评
+                                    <ArrowRight className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <p className="text-center text-zinc-600 text-sm mt-10 italic">
+                                契合始于思想，深化于担当
+                            </p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (stage === 'questions') {
+                const q = questions[currentQuestion];
+                const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-amber-950 via-zinc-900 to-stone-950 flex items-center justify-center p-6">
+                        <div className="max-w-3xl w-full">
+                            <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+                                <div className="mb-8">
+                                    <div className="flex justify-between text-sm text-amber-400 mb-3">
+                                        <span>问题 {currentQuestion + 1} / {questions.length}</span>
+                                        <span className="text-amber-500">{q.dimension}</span>
+                                    </div>
+                                    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden shadow-inner">
+                                        <div 
+                                            className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 h-2 rounded-full transition-all duration-700 ease-out shadow-lg"
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-12 border border-amber-800 border-opacity-20 shadow-2xl">
+                                    <div className="mb-10">
+                                        <p className="text-amber-400 text-sm mb-5 italic leading-relaxed">
+                                            {q.story}
+                                        </p>
+                                        <h2 className="text-2xl text-amber-100 leading-relaxed font-medium">
+                                            {q.text}
+                                        </h2>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {q.shuffledOptions.map((option, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => handleAnswer(option.score)}
+                                                className="w-full p-7 bg-zinc-800 bg-opacity-60 hover:bg-zinc-700 hover:bg-opacity-80 border border-zinc-700 hover:border-amber-600 rounded-2xl text-left text-zinc-200 transition-all duration-300 text-lg leading-relaxed group shadow-lg hover:shadow-amber-900/20"
+                                            >
+                                                <span className="group-hover:text-amber-200 transition-colors">
+                                                    {option.text}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (stage === 'reveal') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-amber-950 via-zinc-900 to-stone-950 flex items-center justify-center p-6">
+                        <div className={`max-w-3xl w-full transition-opacity duration-1000 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-12 border border-amber-800 border-opacity-30 shadow-2xl">
+                                <div className="text-center mb-10">
+                                    <Shield className="w-20 h-20 text-amber-500 mx-auto mb-6" strokeWidth={1.5} />
+                                    <h1 className="text-3xl font-bold text-amber-100 mb-4">
+                                        在揭晓结果之前
+                                    </h1>
+                                    <p className="text-zinc-400 text-lg">请允许我坦诚相告</p>
+                                </div>
+
+                                <div className="space-y-8 text-zinc-300 leading-loose text-lg mb-12">
+                                    <div className="border-l-4 border-amber-600 pl-8 py-2">
+                                        <h3 className="text-amber-300 font-semibold text-xl mb-3">关于年龄与阶段</h3>
+                                        <p>
+                                            我今年48岁，正处于人生的中场重构期。不是衰退，而是智慧的沉淀与能量的重新聚焦。
+                                        </p>
+                                    </div>
+
+                                    <div className="border-l-4 border-emerald-600 pl-8 py-2">
+                                        <h3 className="text-emerald-300 font-semibold text-xl mb-3">关于事业状态</h3>
+                                        <p>
+                                            我目前处于事业转型期（离职状态）。这是ENTJ式的战略性重启——推倒不再适配的旧路，等待更伟大的跃迁。我需要的不是同情，而是理解蛰伏也是力量的伴侣。
+                                        </p>
+                                    </div>
+
+                                    <div className="border-l-4 border-blue-600 pl-8 py-2">
+                                        <h3 className="text-blue-300 font-semibold text-xl mb-3">关于生命责任</h3>
+                                        <p>
+                                            我有一个需要长期专业照顾的孩子。他是我的软肋，也是我最坚硬的盔甲。这份责任让我更懂得什么是无条件的承诺。如果你能接纳他，你就接纳了我生命中最脆弱也最坚韧的部分。
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-amber-900 bg-opacity-20 rounded-2xl p-8 border border-amber-700 border-opacity-30 mb-10">
+                                    <p className="text-amber-200 leading-relaxed text-center text-lg">
+                                        这些是我的真实维度。现在，让我们看看你的答案揭示了什么。
+                                    </p>
+                                </div>
+
+                                <button 
+                                    onClick={() => setStage('result')}
+                                    className="w-full px-8 py-6 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-500 hover:via-amber-600 hover:to-amber-700 text-white rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-medium text-xl shadow-2xl"
+                                >
+                                    查看匹配结果
+                                    <Sparkles className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Result stage
+            const result = calculateResult();
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-amber-950 via-zinc-900 to-stone-950 flex items-center justify-center p-6">
+                    <div className="max-w-3xl w-full">
+                        <div className={`transition-opacity duration-1000 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+                            {result.qualified ? (
+                                <div className="space-y-8">
+                                    <div className="text-center mb-10">
+                                        <Award className="w-24 h-24 text-emerald-400 mx-auto mb-6 drop-shadow-lg" strokeWidth={1.5} />
+                                        <h1 className="text-5xl font-bold text-amber-100 mb-4">{result.level}</h1>
+                                        <div className="text-7xl font-bold bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent mb-3">
+                                            {result.score}%
+                                        </div>
+                                        <p className="text-zinc-400 text-xl">综合匹配度</p>
+                                        <p className="text-amber-500 text-sm mt-2">({result.totalScore} / {result.maxScore} 分)</p>
+                                    </div>
+
+                                    <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-10 border border-emerald-800 border-opacity-30 shadow-2xl">
+                                        <h2 className="text-2xl font-semibold text-amber-200 mb-8 flex items-center gap-3">
+                                            <Sparkles className="w-8 h-8 text-emerald-400" />
+                                            深度解读
+                                        </h2>
+                                        
+                                        <div className="space-y-8 text-zinc-300 leading-loose text-lg">
+                                            <div>
+                                                <h3 className="text-emerald-300 font-semibold text-xl mb-3">你的性格倾向</h3>
+                                                <p className="mb-3">
+                                                    基于你的答案，你很可能是 <span className="text-amber-300 font-semibold">{result.mbtiMatch}</span> 型人格。
+                                                </p>
+                                                <p>
+                                                    你具备极高的心理韧性和英雄主义情怀。你理解什么是战友关系——不是依附，而是并肩；不是避风港，而是共同的战场。
+                                                </p>
+                                            </div>
+
+                                            <div className="border-t border-zinc-700 pt-6">
+                                                <h3 className="text-amber-300 font-semibold text-xl mb-3">为什么你们契合</h3>
+                                                <ul className="space-y-3">
+                                                    <li>• 智力层面：你欣赏逻辑之美，能接住我的思辨而非被其压制</li>
+                                                    <li>• 韧性层面：你理解低谷中的重建，将挑战视为共同创业</li>
+                                                    <li>• 责任层面：你具备照护天性，能看到不完美生命的独特价值</li>
+                                                    <li>• 价值层面：你追求深刻的爱与担当，而非表面的轻松</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-10 border border-amber-800 border-opacity-30 shadow-2xl">
+                                        <h3 className="text-amber-300 font-semibold text-2xl mb-6">相处指南</h3>
+                                        <div className="space-y-5 text-zinc-300 leading-relaxed text-base">
+                                            <div className="flex gap-4">
+                                                <span className="text-amber-500 font-bold text-xl">·</span>
+                                                <p>当我像ENTJ指挥官时：用温柔提醒我放下盔甲，我需要的是伙伴而非下属</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <span className="text-amber-500 font-bold text-xl">·</span>
+                                                <p>当我像ENTP辩论家时：给我智力上的回应而非情绪化的反驳，思想碰撞是我的氧气</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <span className="text-amber-500 font-bold text-xl">·</span>
+                                                <p>关于孩子：坦诚你的能力边界，我们共同制定可持续的节奏，这不是一个人的战斗</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <span className="text-amber-500 font-bold text-xl">·</span>
+                                                <p>关于事业：见证我的重建过程，而非催促结果。你的信任比建议更有力量</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <span className="text-amber-500 font-bold text-xl">·</span>
+                                                <p>关于冲突：我们都需要学会在风暴后携手，对事不对人是我们的共同语言</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-r from-emerald-900 to-amber-900 bg-opacity-30 rounded-2xl p-8 border border-amber-600 border-opacity-30">
+                                        <p className="text-amber-200 leading-relaxed text-center text-lg italic">
+                                            真正的契合，是接纳彼此的全部——包括脆弱、包括未完成、包括那些需要共同面对的现实。
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-8">
+                                    <div className="text-center mb-10">
+                                        <AlertCircle className="w-24 h-24 text-amber-400 mx-auto mb-6 drop-shadow-lg" strokeWidth={1.5} />
+                                        <h1 className="text-5xl font-bold text-amber-100 mb-4">{result.level}</h1>
+                                        <div className="text-7xl font-bold text-amber-400 mb-3">{result.score}%</div>
+                                        <p className="text-zinc-400 text-xl">契合度</p>
+                                        <p className="text-amber-500 text-sm mt-2">({result.totalScore} / {result.maxScore} 分)</p>
+                                    </div>
+
+                                    <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-12 border border-amber-800 border-opacity-30 shadow-2xl">
+                                        <div className="space-y-7 text-zinc-300 leading-loose text-lg">
+                                            <p className="text-amber-300 font-medium text-xl">感谢你的诚实</p>
+                                            <p>你的答案揭示了一个重要的真相：我们可能处于不同的人生阶段，或拥有不同的价值优先级。</p>
+                                            <p>这不是谁对谁错的问题。每个人都有权利选择自己能够承受的生活节奏和责任范围。诚实面对自己的能力边界，本身就是一种成熟和智慧。</p>
+                                            <p className="text-amber-300 pt-6 border-t border-amber-900 border-opacity-30 font-medium">
+                                                我正在寻找的，是能够在暴风雨中与我并肩的战友，而非需要我在风雨中庇护的旅人。
+                                            </p>
+                                            <p className="text-amber-300 font-medium">这需要极高的心理能量层级、对责任的深刻理解，以及对不完美的彻底接纳。</p>
+                                            <p className="pt-4">或许我们的相遇只是为了让彼此更清晰地认识自己想要的生活。这本身就是一种价值，也是一种尊重。</p>
+                                            <p className="text-zinc-400 text-base pt-6 italic">祝你找到真正适合你的幸福。那个能让你舒展、而非紧绷的关系。</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-zinc-900 bg-opacity-70 backdrop-blur-md rounded-3xl p-10 border border-zinc-700 border-opacity-30">
+                                        <h3 className="text-amber-300 font-semibold text-xl mb-4">关于你的测评结果</h3>
+                                        <p className="text-zinc-400 leading-relaxed">
+                                            基于你的选择，你可能更适合寻找一段压力较小、节奏更平稳的关系。这完全没有问题——每个人的人生剧本都不同，关键是找到真正适合自己的那一个。
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-10 bg-zinc-800 bg-opacity-50 rounded-2xl p-6 border border-zinc-700">
+                                <p className="text-zinc-500 text-sm leading-relaxed text-center">
+                                    <strong className="text-amber-400">隐私承诺：</strong> 所有答案仅保存在你的浏览器内存中，关闭页面即消失。这是一场只属于你我之间的对话。
+                                </p>
+                            </div>
+
+                            <button 
+                                onClick={() => {
+                                    setStage('intro');
+                                    setAnswers({});
+                                    setCurrentQuestion(0);
+                                    setFadeIn(false);
+                                }}
+                                className="w-full mt-8 px-8 py-5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded-2xl transition-all duration-300 font-medium text-lg shadow-lg"
+                            >
+                                重新开始测评
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RebuildersMirrorV3 />);
+    </script>
+</body>
+</html>
