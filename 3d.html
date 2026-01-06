@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>万江智脑 3D 标注工作台</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* 布局 */
+    .container {
+      display: grid;
+      grid-template-columns: 80px 1fr 320px;
+      grid-template-rows: 60px 1fr 40px;
+      height: 100vh;
+    }
+
+    /* 顶部导航 */
+    .header {
+      grid-column: 1 / 4;
+      background: #1f1f1f;
+      border-bottom: 1px solid #303030;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #1890ff, #52c41a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    /* 工具栏 */
+    .toolbar {
+      background: #1f1f1f;
+      border-right: 1px solid #303030;
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tool-btn {
+      width: 64px;
+      height: 64px;
+      background: #2a2a2a;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      color: #888;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 24px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .tool-btn:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .tool-btn.active {
+      background: #1890ff;
+      color: #fff;
+      border-color: #40a9ff;
+    }
+
+    .tool-btn span {
+      font-size: 10px;
+    }
+
+    /* 3D 视口 */
+    #viewport {
+      position: relative;
+      background: #0a0a0a;
+    }
+
+    #canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .viewport-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .view-btn:hover {
+      background: #333;
+    }
+
+    /* 属性面板 */
+    .properties {
+      background: #1f1f1f;
+      border-left: 1px solid #303030;
+      overflow-y: auto;
+    }
+
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid #303030;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .panel-section {
+      padding: 16px;
+      border-bottom: 1px solid #303030;
+    }
+
+    .panel-section h4 {
+      margin-bottom: 12px;
+      color: #888;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 6px 12px;
+      background: #2a2a2a;
+      border: 1px solid #303030;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: #1890ff;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      background: #40a9ff;
+    }
+
+    .btn-danger {
+      background: #ff4d4f;
+    }
+
+    .btn-danger:hover {
+      background: #ff7875;
+    }
+
+    .object-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .object-item {
+      padding: 8px 12px;
+      background: #2a2a2a;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .object-item:hover {
+      background: #333;
+    }
+
+    .object-item.selected {
+      background: #1890ff;
+      border-color: #40a9ff;
+    }
+
+    /* 底部状态栏 */
+    .statusbar {
+      grid-column: 1 / 4;
+      background: #1f1f1f;
+      border-top: 1px solid #303030;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status-item {
+      display: flex;
+      gap: 16px;
+    }
+
+    .status-item strong {
+      color: #1890ff;
+    }
+
+    .empty-state {
+      padding: 16px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+    }
+
+    /* 工具提示 */
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部导航 -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">🎯</div>
+        <span>万江智脑 3D 标注工作台</span>
+        <span style="color: #52c41a; font-size: 12px;">● 在线</span>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn" style="width: auto;">💾 保存项目</button>
+        <button class="btn" style="width: auto; background: #2a2a2a;">📤 导出数据</button>
+      </div>
+    </div>
+
+    <!-- 左侧工具栏 -->
+    <div class="toolbar">
+      <button class="tool-btn active" data-tool="select" title="选择工具 (Q)">
+        <div>🎯</div>
+        <span>选择</span>
+      </button>
+      <button class="tool-btn" data-tool="cuboid" title="立方体工具 (R)">
+        <div>📦</div>
+        <span>立方体</span>
+      </button>
+      <button class="tool-btn" data-tool="pan" title="平移工具 (W)">
+        <div>✋</div>
+        <span>平移</span>
+      </button>
+      <button class="tool-btn" id="resetViewBtn" title="重置视角 (Home)">
+        <div>🏠</div>
+        <span>重置</span>
+      </button>
+      <div style="flex: 1;"></div>
+      <button class="tool-btn" id="undoBtn" title="撤销 (Ctrl+Z)">
+        <div>↶</div>
+        <span>撤销</span>
+      </button>
+      <button class="tool-btn" id="redoBtn" title="重做 (Ctrl+Y)">
+        <div>↷</div>
+        <span>重做</span>
+      </button>
+    </div>
+
+    <!-- 3D 视口 -->
+    <div id="viewport">
+      <canvas id="canvas"></canvas>
+      <div class="viewport-controls">
+        <button class="view-btn">3D 视图</button>
+        <button class="view-btn">俯视图</button>
+        <button class="view-btn">侧视图</button>
+      </div>
+      
+      <!-- 调试信息 -->
+      <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 4px; font-size: 11px; color: #52c41a; font-family: monospace;">
+        <div>场景对象: <span id="sceneObjectCount">0</span></div>
+        <div>相机位置: <span id="cameraPos">-</span></div>
+        <div>渲染状态: <span id="renderStatus">初始化中...</span></div>
+      </div>
+    </div>
+
+    <!-- 右侧属性面板 -->
+    <div class="properties">
+      <div class="panel-header">属性面板</div>
+      
+      <div id="propertiesContent">
+        <div class="empty-state">
+          <p>未选中对象</p>
+          <p style="margin-top: 8px;">点击场景中的标注框或使用<br>立方体工具创建新标注</p>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h4>标注对象列表</h4>
+        <div id="objectList" class="object-list"></div>
+        <div id="emptyList" class="empty-state">暂无标注对象</div>
+      </div>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <div class="statusbar">
+      <div class="status-item">
+        <span>帧率: <strong id="fps">60</strong> FPS</span>
+        <span>点云数: <strong>5,000</strong></span>
+        <span>已标注: <strong id="annotationCount">0</strong></span>
+      </div>
+      <div class="status-item">
+        <span>工具: <span id="currentTool">选择</span></span>
+        <span>|</span>
+        <span>坐标: <span id="coords">(0, 0, 0)</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    // ==================== 全局状态管理 ====================
+    const state = {
+      annotations: [],
+      selectedId: null,
+      tool: 'select',
+      history: [],
+      historyIndex: -1,
+      nextId: 1
+    };
+
+    // ==================== Three.js 初始化 ====================
+    const canvas = document.getElementById('canvas');
+    const viewport = document.getElementById('viewport');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
+    
+    const camera = new THREE.PerspectiveCamera(
+      75, 
+      viewport.offsetWidth / viewport.offsetHeight, 
+      0.1, 
+      1000
+    );
+    
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas, 
+      antialias: true,
+      alpha: false 
+    });
+    
+    // 使用视口尺寸而非 canvas 尺寸
+    renderer.setSize(viewport.offsetWidth, viewport.offsetHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x0a0a0a);
+    
+    camera.position.set(15, 15, 15);
+    camera.lookAt(0, 0, 0);
+
+    // 光照
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 10, 5);
+    scene.add(directionalLight);
+
+    // 参考网格 - 使用更明显的颜色
+    const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+    scene.add(gridHelper);
+
+    // 坐标轴 - 加粗显示
+    const axesHelper = new THREE.AxesHelper(8);
+    axesHelper.material.linewidth = 3;
+    scene.add(axesHelper);
+
+    // 底面平面（用于点击创建）
+    const planeGeometry = new THREE.PlaneGeometry(40, 40);
+    const planeMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0x1a1a1a, 
+      transparent: true, 
+      opacity: 0.1,
+      side: THREE.DoubleSide
+    });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotation.x = -Math.PI / 2;
+    plane.name = 'ground';
+    scene.add(plane);
+
+    // ==================== 生成模拟点云 ====================
+    function generatePointCloud() {
+      const count = 5000;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const x = (Math.random() - 0.5) * 20;
+        const z = (Math.random() - 0.5) * 20;
+
+        if (Math.random() < 0.7) {
+          // 地面点
+          positions[i3] = x;
+          positions[i3 + 1] = Math.random() * 0.2;
+          positions[i3 + 2] = z;
+          colors[i3] = colors[i3 + 1] = colors[i3 + 2] = 0.5;
+        } else {
+          // 物体点
+          const objX = Math.sin(Math.random() * Math.PI * 2) * 3;
+          const objZ = Math.cos(Math.random() * Math.PI * 2) * 3;
+          positions[i3] = objX;
+          positions[i3 + 1] = Math.random() * 3 + 0.5;
+          positions[i3 + 2] = objZ;
+          colors[i3] = Math.random() * 0.5 + 0.5;
+          colors[i3 + 1] = Math.random() * 0.5 + 0.3;
+          colors[i3 + 2] = Math.random() * 0.5 + 0.3;
+        }
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const material = new THREE.PointsMaterial({
+        size: 0.08,
+        vertexColors: true,
+        transparent: false,
+        opacity: 1.0,
+        sizeAttenuation: true
+      });
+
+      const points = new THREE.Points(geometry, material);
+      points.name = 'pointcloud';
+      scene.add(points);
+    }
+
+    generatePointCloud();
+
+    // ==================== 创建标注框 ====================
+    function createCuboid(annotation) {
+      const geometry = new THREE.BoxGeometry(...annotation.dimensions);
+      const color = annotation.category === 'defect' ? 0xff4d4f : 
+                    annotation.category === 'product' ? 0x52c41a : 0x1890ff;
+      const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...annotation.position);
+      mesh.name = `annotation_${annotation.id}`;
+      mesh.userData = annotation;
+      scene.add(mesh);
+
+      return mesh;
+    }
+
+    // ==================== 状态管理函数 ====================
+    function addAnnotation(position) {
+      const annotation = {
+        id: state.nextId++,
+        position: position,
+        dimensions: [1, 2, 1],
+        category: 'object',
+        label: `对象 ${state.annotations.length + 1}`
+      };
+
+      state.annotations.push(annotation);
+      state.selectedId = annotation.id;
+      createCuboid(annotation);
+      updateUI();
+      pushHistory();
+    }
+
+    function updateAnnotation(id, updates) {
+      const annotation = state.annotations.find(a => a.id === id);
+      if (annotation) {
+        Object.assign(annotation, updates);
+        
+        // 更新 3D 对象
+        const mesh = scene.getObjectByName(`annotation_${id}`);
+        if (mesh) {
+          if (updates.position) mesh.position.set(...updates.position);
+          if (updates.dimensions) {
+            mesh.geometry.dispose();
+            mesh.geometry = new THREE.BoxGeometry(...updates.dimensions);
+          }
+          mesh.userData = annotation;
+        }
+        
+        updateUI();
+      }
+    }
+
+    function deleteAnnotation(id) {
+      state.annotations = state.annotations.filter(a => a.id !== id);
+      const mesh = scene.getObjectByName(`annotation_${id}`);
+      if (mesh) {
+        scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      }
+      state.selectedId = null;
+      updateUI();
+      pushHistory();
+    }
+
+    function pushHistory() {
+      const snapshot = JSON.parse(JSON.stringify(state.annotations));
+      state.history = state.history.slice(0, state.historyIndex + 1);
+      state.history.push(snapshot);
+      state.historyIndex++;
+    }
+
+    function undo() {
+      if (state.historyIndex > 0) {
+        state.historyIndex--;
+        restoreFromHistory();
+      }
+    }
+
+    function redo() {
+      if (state.historyIndex < state.history.length - 1) {
+        state.historyIndex++;
+        restoreFromHistory();
+      }
+    }
+
+    function restoreFromHistory() {
+      // 清除现有的标注对象
+      state.annotations.forEach(a => {
+        const mesh = scene.getObjectByName(`annotation_${a.id}`);
+        if (mesh) scene.remove(mesh);
+      });
+
+      // 恢复历史状态
+      state.annotations = JSON.parse(JSON.stringify(state.history[state.historyIndex]));
+      state.annotations.forEach(a => createCuboid(a));
+      updateUI();
+    }
+
+    // ==================== UI 更新 ====================
+    function updateUI() {
+      // 更新标注数量
+      document.getElementById('annotationCount').textContent = state.annotations.length;
+
+      // 更新对象列表
+      const listContainer = document.getElementById('objectList');
+      const emptyList = document.getElementById('emptyList');
+      
+      if (state.annotations.length === 0) {
+        listContainer.innerHTML = '';
+        emptyList.style.display = 'block';
+      } else {
+        emptyList.style.display = 'none';
+        listContainer.innerHTML = state.annotations.map(a => `
+          <div class="object-item ${state.selectedId === a.id ? 'selected' : ''}" 
+               data-id="${a.id}">
+            📦 ${a.label}
+          </div>
+        `).join('');
+      }
+
+      // 更新属性面板
+      const selected = state.annotations.find(a => a.id === state.selectedId);
+      const content = document.getElementById('propertiesContent');
+      
+      if (!selected) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <p>未选中对象</p>
+            <p style="margin-top: 8px;">点击场景中的标注框或使用<br>立方体工具创建新标注</p>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="panel-section">
+            <h4>基本信息</h4>
+            <div class="form-group">
+              <label>标签名称</label>
+              <input type="text" id="labelInput" value="${selected.label}">
+            </div>
+            <div class="form-group">
+              <label>类别</label>
+              <select id="categorySelect">
+                <option value="object" ${selected.category === 'object' ? 'selected' : ''}>普通对象</option>
+                <option value="product" ${selected.category === 'product' ? 'selected' : ''}>产品</option>
+                <option value="defect" ${selected.category === 'defect' ? 'selected' : ''}>缺陷</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h4>位置 (Position)</h4>
+            <div class="form-group">
+              <label>X</label>
+              <input type="number" id="posX" value="${selected.position[0].toFixed(2)}" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Y</label>
+              <input type="number" id="posY" value="${selected.position[1].toFixed(2)}" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Z</label>
+              <input type="number" id="posZ" value="${selected.position[2].toFixed(2)}" step="0.1">
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h4>尺寸 (Dimensions)</h4>
+            <div class="form-group">
+              <label>宽度</label>
+              <input type="number" id="dimX" value="${selected.dimensions[0].toFixed(2)}" step="0.1" min="0.1">
+            </div>
+            <div class="form-group">
+              <label>高度</label>
+              <input type="number" id="dimY" value="${selected.dimensions[1].toFixed(2)}" step="0.1" min="0.1">
+            </div>
+            <div class="form-group">
+              <label>深度</label>
+              <input type="number" id="dimZ" value="${selected.dimensions[2].toFixed(2)}" step="0.1" min="0.1">
+            </div>
+            
+            <button class="btn btn-danger" id="deleteBtn">🗑️ 删除标注</button>
+          </div>
+        `;
+
+        // 绑定属性输入事件
+        const bindInput = (id, field, index = null) => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.addEventListener('change', () => {
+              const value = parseFloat(input.value);
+              if (index !== null) {
+                const arr = [...selected[field]];
+                arr[index] = value;
+                updateAnnotation(selected.id, { [field]: arr });
+              } else {
+                updateAnnotation(selected.id, { [field]: input.value });
+              }
+            });
+          }
+        };
+
+        bindInput('labelInput', 'label');
+        document.getElementById('categorySelect')?.addEventListener('change', (e) => {
+          updateAnnotation(selected.id, { category: e.target.value });
+        });
+        
+        bindInput('posX', 'position', 0);
+        bindInput('posY', 'position', 1);
+        bindInput('posZ', 'position', 2);
+        bindInput('dimX', 'dimensions', 0);
+        bindInput('dimY', 'dimensions', 1);
+        bindInput('dimZ', 'dimensions', 2);
+
+        document.getElementById('deleteBtn')?.addEventListener('click', () => {
+          if (confirm('确定要删除这个标注对象吗？')) {
+            deleteAnnotation(selected.id);
+          }
+        });
+      }
+    }
+
+    // ==================== 鼠标交互 ====================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let isDragging = false;
+    let isRotating = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    canvas.addEventListener('mousedown', (e) => {
+      isRotating = e.button === 2 || e.button === 1; // 右键或中键旋转
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (isRotating) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+        
+        camera.position.x += deltaX * 0.01;
+        camera.position.y -= deltaY * 0.01;
+        camera.lookAt(0, 0, 0);
+        
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      }
+
+      // 更新坐标显示
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(plane);
+      if (intersects.length > 0) {
+        const p = intersects[0].point;
+        document.getElementById('coords').textContent = 
+          `(${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)})`;
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isRotating = false;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      
+      // 检查是否点击了标注对象
+      const annotationObjects = scene.children.filter(obj => obj.name.startsWith('annotation_'));
+      const intersects = raycaster.intersectObjects(annotationObjects);
+
+      if (intersects.length > 0) {
+        const id = parseInt(intersects[0].object.name.split('_')[1]);
+        state.selectedId = id;
+        updateUI();
+      } else if (state.tool === 'cuboid') {
+        // 点击地面创建新标注
+        const groundIntersects = raycaster.intersectObject(plane);
+        if (groundIntersects.length > 0) {
+          const point = groundIntersects[0].point;
+          addAnnotation([point.x, point.y + 1, point.z]);
+        }
+      }
+    });
+
+    // 禁用右键菜单
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 鼠标滚轮缩放
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY * 0.01;
+      camera.position.multiplyScalar(1 + delta * 0.1);
+    });
+
+    // ==================== 工具栏事件 ====================
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.tool = btn.dataset.tool;
+        document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const toolNames = { select: '选择', cuboid: '立方体', pan: '平移' };
+        document.getElementById('currentTool').textContent = toolNames[state.tool];
+      });
+    });
+
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('redoBtn').addEventListener('click', redo);
+    
+    // 重置视角
+    document.getElementById('resetViewBtn').addEventListener('click', () => {
+      camera.position.set(15, 15, 15);
+      camera.lookAt(0, 0, 0);
+    });
+
+    // 对象列表点击事件
+    document.getElementById('objectList').addEventListener('click', (e) => {
+      const item = e.target.closest('.object-item');
+      if (item) {
+        state.selectedId = parseInt(item.dataset.id);
+        updateUI();
+      }
+    });
+
+    // ==================== 快捷键 ====================
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      } else if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        redo();
+      } else if (e.key === 'q') {
+        document.querySelector('[data-tool="select"]').click();
+      } else if (e.key === 'r') {
+        document.querySelector('[data-tool="cuboid"]').click();
+      } else if (e.key === 'Delete' && state.selectedId) {
+        if (confirm('确定要删除选中的标注对象吗？')) {
+          deleteAnnotation(state.selectedId);
+        }
+      }
+    });
+
+    // ==================== 渲染循环 ====================
+    let lastTime = performance.now();
+    let frameCount = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // FPS 计算
+      frameCount++;
+      const now = performance.now();
+      if (now >= lastTime + 1000) {
+        const fps = Math.round((frameCount * 1000) / (now - lastTime));
+        document.getElementById('fps').textContent = fps;
+        document.getElementById('fps').style.color = fps > 50 ? '#52c41a' : '#ff4d4f';
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      // 高亮选中的对象
+      scene.children.forEach(obj => {
+        if (obj.name.startsWith('annotation_')) {
+          const id = parseInt(obj.name.split('_')[1]);
+          if (id === state.selectedId) {
+            obj.material.opacity = 0.8;
+          } else {
+            obj.material.opacity = 0.3;
+          }
+        }
+      });
+
+      // 更新调试信息
+      document.getElementById('sceneObjectCount').textContent = scene.children.length;
+      const camPos = camera.position;
+      document.getElementById('cameraPos').textContent = 
+        `(${camPos.x.toFixed(1)}, ${camPos.y.toFixed(1)}, ${camPos.z.toFixed(1)})`;
+      document.getElementById('renderStatus').textContent = '正常运行';
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ==================== 窗口调整 ====================
+    function handleResize() {
+      const viewport = document.getElementById('viewport');
+      const width = viewport.offsetWidth;
+      const height = viewport.offsetHeight;
+      
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+    
+    window.addEventListener('resize', handleResize);
+    
+    // 确保初始渲染正确
+    setTimeout(handleResize, 100);
+
+    // 初始化 UI
+    updateUI();
+  </script>
+</body>
+</html>
