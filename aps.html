@@ -1,14 +1,784 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>APS排产系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APS排产系统 - 生产排程</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
   <div id="root"></div>
-  <script src="aps.js"></script>
+
+  <script type="text/babel">
+    const { useState, useRef } = React;
+
+    // SVG图标组件
+    const Icons = {
+      Plus: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      ),
+      Filter: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+      ),
+      Download: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      ),
+      RefreshCw: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      ),
+      X: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      ),
+      Save: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+        </svg>
+      ),
+      Edit2: () => (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+      ),
+      Trash2: () => (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      ),
+      Link: () => (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      ),
+      AlertCircle: () => (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      ),
+    };
+
+    // 初始任务数据
+    const initialTasks = [
+      {
+        id: 1,
+        text: 'PCB板A生产',
+        start_date: new Date(2026, 0, 6),
+        duration: 3,
+        progress: 0.6,
+        order_no: 'ORD-2026-001',
+        product_name: '4层PCB板',
+        resource_id: 'R1',
+        resource_name: '生产线1',
+        equipment: 'SMT-01',
+        operator: '张三',
+        priority: 'high',
+        status: 'running',
+        color: '#3b82f6'
+      },
+      {
+        id: 2,
+        text: 'PCB板B生产',
+        start_date: new Date(2026, 0, 7),
+        duration: 2,
+        progress: 0.3,
+        order_no: 'ORD-2026-002',
+        product_name: '6层PCB板',
+        resource_id: 'R1',
+        resource_name: '生产线1',
+        equipment: 'SMT-01',
+        operator: '李四',
+        priority: 'medium',
+        status: 'running',
+        color: '#ef4444',
+        has_conflict: true
+      },
+      {
+        id: 3,
+        text: 'PCB板C测试',
+        start_date: new Date(2026, 0, 9),
+        duration: 1,
+        progress: 0,
+        order_no: 'ORD-2026-003',
+        product_name: '2层PCB板',
+        resource_id: 'R2',
+        resource_name: '生产线2',
+        equipment: 'TEST-01',
+        operator: '王五',
+        priority: 'low',
+        status: 'pending',
+        color: '#10b981'
+      },
+      {
+        id: 4,
+        text: 'PCB板D生产',
+        start_date: new Date(2026, 0, 8),
+        duration: 4,
+        progress: 0.8,
+        order_no: 'ORD-2026-004',
+        product_name: '8层PCB板',
+        resource_id: 'R2',
+        resource_name: '生产线2',
+        equipment: 'SMT-02',
+        operator: '赵六',
+        priority: 'high',
+        status: 'running',
+        color: '#8b5cf6'
+      },
+      {
+        id: 5,
+        text: 'PCB板E包装',
+        start_date: new Date(2026, 0, 11),
+        duration: 1,
+        progress: 0,
+        order_no: 'ORD-2026-005',
+        product_name: '4层PCB板',
+        resource_id: 'R3',
+        resource_name: '包装线',
+        equipment: 'PACK-01',
+        operator: '孙七',
+        priority: 'medium',
+        status: 'pending',
+        color: '#f59e0b'
+      }
+    ];
+
+    const initialLinks = [
+      { id: 'L1', source: 1, target: 3, type: 'FS' },
+      { id: 'L2', source: 4, target: 5, type: 'FS' },
+      { id: 'L3', source: 2, target: 3, type: 'SS' }
+    ];
+
+    const GanttDemo = () => {
+      const [tasks, setTasks] = useState(initialTasks);
+      const [links, setLinks] = useState(initialLinks);
+      const [selectedTask, setSelectedTask] = useState(null);
+      const [viewMode, setViewMode] = useState('day');
+      const [showFilters, setShowFilters] = useState(false);
+      const [showTaskForm, setShowTaskForm] = useState(false);
+      const [editingTask, setEditingTask] = useState(null);
+      const [isCreatingLink, setIsCreatingLink] = useState(false);
+      const [linkSourceTask, setLinkSourceTask] = useState(null);
+      const [filters, setFilters] = useState({ resource: 'all', status: 'all', priority: 'all' });
+      const [draggedTask, setDraggedTask] = useState(null);
+      const [hoveredTask, setHoveredTask] = useState(null);
+      const ganttRef = useRef(null);
+
+      const [formData, setFormData] = useState({
+        text: '',
+        order_no: '',
+        product_name: '',
+        resource_id: '',
+        resource_name: '',
+        equipment: '',
+        operator: '',
+        start_date: new Date().toISOString().split('T')[0],
+        duration: 1,
+        priority: 'medium',
+        status: 'pending',
+        progress: 0,
+        color: '#3b82f6'
+      });
+
+      const getTaskPosition = (task) => {
+        const startDate = new Date(2026, 0, 5);
+        const daysDiff = Math.floor((task.start_date - startDate) / (1000 * 60 * 60 * 24));
+        const dayWidth = viewMode === 'day' ? 80 : viewMode === 'week' ? 40 : 30;
+        return { left: daysDiff * dayWidth, width: task.duration * dayWidth };
+      };
+
+      const generateTimeScale = () => {
+        const dates = [];
+        const startDate = new Date(2026, 0, 5);
+        const days = viewMode === 'day' ? 14 : viewMode === 'week' ? 28 : 60;
+        for (let i = 0; i < days; i++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + i);
+          dates.push(date);
+        }
+        return dates;
+      };
+
+      const formatDate = (date) => {
+        if (viewMode === 'day') return `${date.getMonth() + 1}/${date.getDate()}`;
+        if (viewMode === 'week') return `W${Math.ceil(date.getDate() / 7)}`;
+        return `${date.getMonth() + 1}月`;
+      };
+
+      const filteredTasks = tasks.filter(task => {
+        if (filters.resource !== 'all' && task.resource_id !== filters.resource) return false;
+        if (filters.status !== 'all' && task.status !== filters.status) return false;
+        if (filters.priority !== 'all' && task.priority !== filters.priority) return false;
+        return true;
+      });
+
+      const handleTaskDragStart = (e, task) => {
+        e.dataTransfer.effectAllowed = 'move';
+        setDraggedTask(task);
+      };
+
+      const handleTaskDrop = (e) => {
+        e.preventDefault();
+        if (!draggedTask) return;
+        const rect = ganttRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left - 400;
+        const dayWidth = viewMode === 'day' ? 80 : 40;
+        const daysDiff = Math.floor(x / dayWidth);
+        const newStartDate = new Date(2026, 0, 5);
+        newStartDate.setDate(newStartDate.getDate() + daysDiff);
+        setTasks(tasks.map(t => t.id === draggedTask.id ? { ...t, start_date: newStartDate } : t));
+        setDraggedTask(null);
+      };
+
+      const handleCreateTask = () => {
+        setEditingTask(null);
+        setFormData({
+          text: '', order_no: '', product_name: '', resource_id: '', resource_name: '',
+          equipment: '', operator: '', start_date: new Date().toISOString().split('T')[0],
+          duration: 1, priority: 'medium', status: 'pending', progress: 0, color: '#3b82f6'
+        });
+        setShowTaskForm(true);
+      };
+
+      const handleEditTask = (task) => {
+        setEditingTask(task);
+        setFormData({ ...task, start_date: task.start_date.toISOString().split('T')[0], progress: task.progress * 100 });
+        setShowTaskForm(true);
+      };
+
+      const handleSaveTask = (e) => {
+        e.preventDefault();
+        const taskData = {
+          ...formData,
+          start_date: new Date(formData.start_date),
+          duration: parseInt(formData.duration),
+          progress: parseFloat(formData.progress) / 100,
+          id: editingTask ? editingTask.id : Date.now()
+        };
+        if (editingTask) {
+          setTasks(tasks.map(t => t.id === editingTask.id ? taskData : t));
+        } else {
+          setTasks([...tasks, taskData]);
+        }
+        setShowTaskForm(false);
+      };
+
+      const handleDeleteTask = (taskId) => {
+        if (window.confirm('确定要删除这个任务吗？')) {
+          setTasks(tasks.filter(t => t.id !== taskId));
+          setLinks(links.filter(l => l.source !== taskId && l.target !== taskId));
+          setSelectedTask(null);
+        }
+      };
+
+      const handleStartCreateLink = (task) => {
+        setIsCreatingLink(true);
+        setLinkSourceTask(task);
+      };
+
+      const handleCompleteLink = (targetTask) => {
+        if (isCreatingLink && linkSourceTask && linkSourceTask.id !== targetTask.id) {
+          setLinks([...links, { id: `L${Date.now()}`, source: linkSourceTask.id, target: targetTask.id, type: 'FS' }]);
+        }
+        setIsCreatingLink(false);
+        setLinkSourceTask(null);
+      };
+
+      const renderLinks = () => {
+        return links.map(link => {
+          const sourceTask = tasks.find(t => t.id === link.source);
+          const targetTask = tasks.find(t => t.id === link.target);
+          if (!sourceTask || !targetTask) return null;
+          const sourceIndex = filteredTasks.findIndex(t => t.id === sourceTask.id);
+          const targetIndex = filteredTasks.findIndex(t => t.id === targetTask.id);
+          if (sourceIndex === -1 || targetIndex === -1) return null;
+          const sourcePos = getTaskPosition(sourceTask);
+          const targetPos = getTaskPosition(targetTask);
+          const sourceY = sourceIndex * 48 + 24;
+          const targetY = targetIndex * 48 + 24;
+          const startX = sourcePos.left + sourcePos.width;
+          const endX = targetPos.left;
+          const midX = (startX + endX) / 2;
+          return (
+            <g key={link.id} className="link-group">
+              <path
+                d={`M ${startX} ${sourceY} L ${midX} ${sourceY} L ${midX} ${targetY} L ${endX} ${targetY}`}
+                stroke="#94a3b8" strokeWidth="2" fill="none" className="link-path"
+              />
+              <polygon points={`${endX},${targetY} ${endX-6},${targetY-4} ${endX-6},${targetY+4}`} fill="#94a3b8" />
+              <circle cx={midX} cy={(sourceY + targetY) / 2} r="8" fill="white" stroke="#94a3b8" strokeWidth="2"
+                className="link-delete-btn" onClick={() => setLinks(links.filter(l => l.id !== link.id))} />
+              <text x={midX} y={(sourceY + targetY) / 2} fontSize="10" fill="#94a3b8" textAnchor="middle" 
+                dominantBaseline="central" className="link-delete-icon">✕</text>
+            </g>
+          );
+        });
+      };
+
+      const resourceOptions = [
+        { id: 'R1', name: '生产线1' },
+        { id: 'R2', name: '生产线2' },
+        { id: 'R3', name: '包装线' }
+      ];
+
+      return (
+        <div className="w-full h-screen bg-gray-50 flex flex-col">
+          <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold text-gray-800">APS排产系统 - 生产排程</h1>
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                {['day', 'week', 'month'].map(mode => (
+                  <button key={mode} onClick={() => setViewMode(mode)}
+                    className={`px-3 py-1.5 rounded text-sm transition-all ${viewMode === mode ? 'bg-white shadow' : 'hover:bg-gray-200'}`}>
+                    {mode === 'day' ? '日' : mode === 'week' ? '周' : '月'}视图
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleCreateTask}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transform hover:scale-105 transition-all">
+                <Icons.Plus /> 新建任务
+              </button>
+              <button onClick={() => setShowFilters(!showFilters)}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                <Icons.Filter /> 筛选
+              </button>
+              <button className="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                <Icons.RefreshCw /> 刷新
+              </button>
+              <button className="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                <Icons.Download /> 导出
+              </button>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="bg-white border-b px-6 py-4">
+              <div className="flex gap-4">
+                {['resource', 'status', 'priority'].map(key => (
+                  <div key={key} className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {key === 'resource' ? '资源' : key === 'status' ? '状态' : '优先级'}
+                    </label>
+                    <select value={filters[key]} onChange={(e) => setFilters({...filters, [key]: e.target.value})}
+                      className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                      <option value="all">全部</option>
+                      {key === 'resource' && <><option value="R1">生产线1</option><option value="R2">生产线2</option><option value="R3">包装线</option></>}
+                      {key === 'status' && <><option value="pending">待开始</option><option value="running">进行中</option><option value="completed">已完成</option></>}
+                      {key === 'priority' && <><option value="high">高</option><option value="medium">中</option><option value="low">低</option></>}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-auto" ref={ganttRef}>
+            <div className="flex">
+              <div className="w-[400px] bg-white border-r flex-shrink-0">
+                <div className="border-b bg-gray-50 sticky top-0 z-10">
+                  <div className="flex text-xs font-medium text-gray-600">
+                    <div className="w-[180px] px-3 py-3 border-r">任务名称</div>
+                    <div className="w-[100px] px-3 py-3 border-r text-center">订单号</div>
+                    <div className="w-[120px] px-3 py-3 text-center">资源</div>
+                  </div>
+                </div>
+                {filteredTasks.map((task) => (
+                  <div key={task.id} onClick={() => setSelectedTask(task)}
+                    onMouseEnter={() => setHoveredTask(task.id)} onMouseLeave={() => setHoveredTask(null)}
+                    className={`flex border-b cursor-pointer transition-all ${selectedTask?.id === task.id ? 'bg-blue-50' : 'hover:bg-blue-50'} 
+                      ${task.has_conflict ? 'bg-red-50' : ''} ${hoveredTask === task.id ? 'transform scale-[1.01]' : ''}`}
+                    style={{ height: '48px' }}>
+                    <div className="w-[180px] px-3 py-3 border-r flex items-center gap-2 text-sm">
+                      {task.has_conflict && <Icons.AlertCircle />}
+                      <span className="truncate">{task.text}</span>
+                    </div>
+                    <div className="w-[100px] px-3 py-3 border-r flex items-center justify-center text-xs text-gray-600">
+                      {task.order_no}
+                    </div>
+                    <div className="w-[120px] px-3 py-3 flex items-center justify-center">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{task.resource_name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex-1 bg-white relative">
+                <div className="border-b bg-gray-50 sticky top-0 z-10">
+                  <div className="flex text-xs font-medium text-gray-600">
+                    {generateTimeScale().map((date, i) => (
+                      <div key={i} className="border-r text-center py-3"
+                        style={{ width: viewMode === 'day' ? '80px' : viewMode === 'week' ? '40px' : '30px' }}>
+                        {formatDate(date)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative" onDragOver={(e) => e.preventDefault()}>
+                  <div className="absolute inset-0 flex pointer-events-none">
+                    {generateTimeScale().map((_, i) => (
+                      <div key={i} className="border-r border-gray-100"
+                        style={{ width: viewMode === 'day' ? '80px' : viewMode === 'week' ? '40px' : '30px' }} />
+                    ))}
+                  </div>
+
+                  <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: filteredTasks.length * 48 }}>
+                    <g className="pointer-events-auto">{renderLinks()}</g>
+                  </svg>
+
+                  <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none animate-pulse" style={{ left: '80px' }}>
+                    <div className="absolute -top-3 -left-8 bg-red-500 text-white text-xs px-2 py-0.5 rounded">今天</div>
+                  </div>
+
+                  {filteredTasks.map((task, index) => {
+                    const position = getTaskPosition(task);
+                    const isHovered = hoveredTask === task.id;
+                    return (
+                      <div key={task.id} className="relative border-b" style={{ height: '48px' }} onDrop={handleTaskDrop}>
+                        <div draggable onDragStart={(e) => handleTaskDragStart(e, task)}
+                          onMouseEnter={() => setHoveredTask(task.id)} onMouseLeave={() => setHoveredTask(null)}
+                          onClick={(e) => { if (isCreatingLink) { e.stopPropagation(); handleCompleteLink(task); } }}
+                          className={`absolute top-2 rounded-lg shadow-sm cursor-move transition-all duration-300 
+                            ${task.has_conflict ? 'ring-2 ring-red-500 animate-pulse' : ''} ${isHovered ? 'shadow-xl transform scale-105 z-30' : ''}
+                            ${isCreatingLink && linkSourceTask?.id !== task.id ? 'ring-2 ring-green-500' : ''}`}
+                          style={{ left: `${position.left}px`, width: `${position.width}px`, height: '32px',
+                            backgroundColor: task.color, opacity: draggedTask?.id === task.id ? 0.5 : 0.9 }}>
+                          <div className="h-full flex items-center justify-between px-3 text-white text-xs relative">
+                            <span className="truncate font-medium">{task.text}</span>
+                            <span className="font-semibold">{Math.round(task.progress * 100)}%</span>
+                            {isHovered && !isCreatingLink && (
+                              <div className="absolute -top-8 right-0 flex gap-1 bg-white rounded-lg shadow-lg p-1">
+                                <button onClick={(e) => { e.stopPropagation(); handleStartCreateLink(task); }}
+                                  className="p-1 hover:bg-blue-100 rounded" title="创建依赖">
+                                  <Icons.Link />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}
+                                  className="p-1 hover:bg-blue-100 rounded" title="编辑">
+                                  <Icons.Edit2 />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                                  className="p-1 hover:bg-red-100 rounded" title="删除">
+                                  <Icons.Trash2 />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="absolute bottom-0 left-0 h-1 bg-white bg-opacity-40 rounded-bl-lg transition-all duration-500"
+                            style={{ width: `${task.progress * 100}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {showTaskForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-2xl w-[600px] max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold">{editingTask ? '编辑任务' : '新建任务'}</h2>
+                  <button onClick={() => setShowTaskForm(false)} className="text-gray-400 hover:text-gray-600">
+                    <Icons.X />
+                  </button>
+                </div>
+                <form onSubmit={handleSaveTask} className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">任务名称 <span className="text-red-500">*</span></label>
+                      <input type="text" required value={formData.text} onChange={(e) => setFormData({...formData, text: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="请输入任务名称" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">订单号</label>
+                      <input type="text" value={formData.order_no} onChange={(e) => setFormData({...formData, order_no: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">产品名称</label>
+                      <input type="text" value={formData.product_name} onChange={(e) => setFormData({...formData, product_name: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">资源 <span className="text-red-500">*</span></label>
+                      <select required value={formData.resource_id} onChange={(e) => {
+                        const res = resourceOptions.find(r => r.id === e.target.value);
+                        setFormData({...formData, resource_id: e.target.value, resource_name: res?.name || ''});
+                      }} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <option value="">请选择</option>
+                        {resourceOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">设备</label>
+                      <input type="text" value={formData.equipment} onChange={(e) => setFormData({...formData, equipment: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">操作员</label>
+                      <input type="text" value={formData.operator} onChange={(e) => setFormData({...formData, operator: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">开始日期 <span className="text-red-500">*</span></label>
+                      <input type="date" required value={formData.start_date} onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">工期(天) <span className="text-red-500">*</span></label>
+                      <input type="number" required min="1" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">优先级</label>
+                      <select value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <option value="high">高</option>
+                        <option value="medium">中</option>
+                        <option value="low">低</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+                      <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <option value="pending">待开始</option>
+                        <option value="running">进行中</option>
+                        <option value="completed">已完成</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">完成进度(%) <span className="text-red-500">*</span></label>
+                      <input type="number" required min="0" max="100" value={formData.progress} 
+                        onChange={(e) => setFormData({...formData, progress: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">任务颜色</label>
+                      <div className="flex gap-2">
+                        <input type="color" value={formData.color} onChange={(e) => setFormData({...formData, color: e.target.value})}
+                          className="w-12 h-10 border rounded-lg cursor-pointer" />
+                        <input type="text" value={formData.color} onChange={(e) => setFormData({...formData, color: e.target.value})}
+                          className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-4 border-t">
+                    <button type="submit"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transform hover:scale-105 transition-all">
+                      <Icons.Save /> 保存任务
+                    </button>
+                    <button type="button" onClick={() => setShowTaskForm(false)}
+                      className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {isCreatingLink && (
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce">
+              <div className="flex items-center gap-2">
+                <Icons.Link />
+                <span>请点击目标任务以创建依赖关系</span>
+                <button onClick={() => { setIsCreatingLink(false); setLinkSourceTask(null); }}
+                  className="ml-4 text-white hover:text-gray-200">
+                  <Icons.X />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {selectedTask && (
+            <div className="fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-2xl z-50 overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold">任务详情</h2>
+                  <button onClick={() => setSelectedTask(null)} className="text-gray-400 hover:text-gray-600">
+                    <Icons.X />
+                  </button>
+                </div>
+
+                {selectedTask.has_conflict && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-pulse">
+                    <Icons.AlertCircle />
+                    <div className="text-sm text-red-700">
+                      <div className="font-medium">资源冲突警告</div>
+                      <div className="text-xs mt-1">该任务与其他任务存在资源冲突，请调整排程时间</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">任务名称</label>
+                    <div className="text-base font-semibold">{selectedTask.text}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">订单号</label>
+                      <div className="text-sm text-gray-600">{selectedTask.order_no}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">产品名称</label>
+                      <div className="text-sm text-gray-600">{selectedTask.product_name}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">资源</label>
+                      <div className="text-sm">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">{selectedTask.resource_name}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">设备</label>
+                      <div className="text-sm text-gray-600">{selectedTask.equipment}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">操作员</label>
+                    <div className="text-sm text-gray-600">{selectedTask.operator}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+                      <div className="text-sm text-gray-600">{selectedTask.start_date.toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">工期</label>
+                      <div className="text-sm text-gray-600">{selectedTask.duration} 天</div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">完成进度</label>
+                    <div className="relative pt-1">
+                      <div className="flex mb-2 items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-600">
+                          {Math.round(selectedTask.progress * 100)}%
+                        </span>
+                      </div>
+                      <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
+                        <div style={{ width: `${selectedTask.progress * 100}%` }}
+                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        selectedTask.priority === 'high' ? 'bg-red-100 text-red-700' : 
+                        selectedTask.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {selectedTask.priority === 'high' ? '高' : selectedTask.priority === 'medium' ? '中' : '低'}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        selectedTask.status === 'running' ? 'bg-blue-100 text-blue-700' :
+                        selectedTask.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {selectedTask.status === 'running' ? '进行中' : selectedTask.status === 'completed' ? '已完成' : '待开始'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">依赖关系</label>
+                    <div className="space-y-2">
+                      {links.filter(l => l.source === selectedTask.id || l.target === selectedTask.id).map(link => {
+                        const isSource = link.source === selectedTask.id;
+                        const relatedTask = tasks.find(t => t.id === (isSource ? link.target : link.source));
+                        return (
+                          <div key={link.id} className="flex items-center gap-2 text-sm p-2 bg-gray-50 rounded">
+                            <Icons.Link />
+                            <span className="text-gray-600">
+                              {isSource ? '后续任务:' : '前置任务:'} {relatedTask?.text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {links.filter(l => l.source === selectedTask.id || l.target === selectedTask.id).length === 0 && (
+                        <div className="text-sm text-gray-400">暂无依赖关系</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t flex gap-2">
+                    <button onClick={() => handleEditTask(selectedTask)}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all">
+                      编辑任务
+                    </button>
+                    <button onClick={() => handleDeleteTask(selectedTask.id)}
+                      className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-all">
+                      删除任务
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white border-t px-6 py-3 flex items-center justify-between text-sm">
+            <div className="flex gap-6">
+              <div className="flex items-center gap-2 transition-all hover:scale-105">
+                <div className="w-3 h-3 rounded bg-blue-500" />
+                <span className="text-gray-600">进行中: {tasks.filter(t => t.status === 'running').length}</span>
+              </div>
+              <div className="flex items-center gap-2 transition-all hover:scale-105">
+                <div className="w-3 h-3 rounded bg-gray-500" />
+                <span className="text-gray-600">待开始: {tasks.filter(t => t.status === 'pending').length}</span>
+              </div>
+              <div className="flex items-center gap-2 transition-all hover:scale-105">
+                <div className="w-3 h-3 rounded bg-green-500" />
+                <span className="text-gray-600">已完成: {tasks.filter(t => t.status === 'completed').length}</span>
+              </div>
+              <div className="flex items-center gap-2 transition-all hover:scale-105">
+                <Icons.AlertCircle />
+                <span className="text-gray-600">冲突: {tasks.filter(t => t.has_conflict).length}</span>
+              </div>
+            </div>
+            <div className="text-gray-500">总任务: {tasks.length} | 依赖: {links.length}</div>
+          </div>
+
+          <style>{`
+            .link-group:hover .link-path { stroke: #3b82f6; stroke-width: 3; }
+            .link-group:hover .link-arrow { fill: #3b82f6; }
+            .link-group:hover .link-delete-btn, .link-group:hover .link-delete-icon { opacity: 1; }
+            .link-delete-btn { opacity: 0; transition: opacity 0.2s; cursor: pointer; }
+            .link-delete-icon { opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+          `}</style>
+        </div>
+      );
+    };
+
+    // 渲染应用
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<GanttDemo />);
+  </script>
 </body>
 </html>
