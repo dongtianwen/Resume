@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EdgeOptima 边缘优控 | 制造现场边缘AI落地专家</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .hero-bg { background: linear-gradient(rgba(10,37,64,0.88), rgba(10,37,64,0.88)), url('https://picsum.photos/id/1015/1920/1080') center/cover no-repeat; }
+    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-12px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
+    .float-btn { position: fixed; bottom: 30px; right: 30px; z-index: 50; }
+  </style>
+</head>
+<body class="font-sans bg-white">
+
+  <!-- 浮动微信按钮 -->
+  <a href="https://wa.me/你的微信号" class="float-btn bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl text-3xl">💬</a>
+
+  <!-- 导航栏 -->
+  <nav class="bg-white border-b sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-4xl">🔹</span>
+        <div>
+          <span class="text-3xl font-bold tracking-tight text-[#0A2540]">EdgeOptima</span>
+          <span class="block text-sm text-gray-500 -mt-1">边缘优控</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-8 text-sm">
+        <a href="#core" class="hover:text-orange-600 font-medium">核心能力</a>
+        <a href="#service" class="hover:text-orange-600 font-medium">诊断服务</a>
+        <a href="#why" class="hover:text-orange-600 font-medium">为什么选择我们</a>
+        <a href="#contact" class="bg-orange-600 hover:bg-orange-700 text-white px-7 py-3 rounded-full font-medium">预约免费诊断</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero-bg h-screen flex items-center text-white">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-8 py-3 rounded-full text-sm mb-8">
+        东莞数据标注产业园入驻企业 | 专注制造现场的边缘 AI 落地 (注塑 / 五金 / 质检)
+      </div>
+      <h1 class="text-5xl md:text-7xl font-bold leading-none mb-8">
+        轻量化部署 · 低风险试错 · 快速见效
+      </h1>
+      <p class="text-2xl md:text-3xl text-gray-200 max-w-4xl mx-auto leading-relaxed">
+        用极低成本的工业边缘计算，为您解决车间“废品高、调机难、依赖人工”的真痛点。<br>
+        在不折腾现有产线的前提下，落地真正省钱的 AI。
+      </p>
+      <div class="mt-12">
+        <a href="#contact" class="inline-flex items-center gap-3 bg-white text-[#0A2540] hover:bg-gray-100 px-12 py-6 rounded-3xl text-2xl font-semibold">
+          预约现场免费 AI 方案诊断
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 壹 | 核心落地能力 -->
+  <section id="core" class="py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">壹</span>
+        <h2 class="text-4xl font-bold mt-4">核心落地能力：拔电即走的边缘智控系统</h2>
+        <p class="text-xl text-gray-600 mt-3">不碰您的主产线，提供模块化的智能升级</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-10">
+        <div class="bg-white p-10 rounded-3xl card-hover">
+          <div class="text-6xl mb-8">⚙️</div>
+          <h3 class="text-3xl font-semibold mb-6">注塑工艺智能优化</h3>
+          <p class="text-gray-600 leading-relaxed">
+            打破车间对“资深调机师傅”的重度依赖。工业 AI 盒子通过旁路采集运行历史数据（温度、压力等），动态寻找最优参数组合。<br><br>
+            <strong>实测指标：</strong>内部POC环境下，辅助寻优时间缩短约60%，废品波动收敛至2%以内。
+          </p>
+        </div>
+        <div class="bg-white p-10 rounded-3xl card-hover">
+          <div class="text-6xl mb-8">👁️</div>
+          <h3 class="text-3xl font-semibold mb-6">机器视觉缺陷检测</h3>
+          <p class="text-gray-600 leading-relaxed">
+            针对五金件、工业钢材等表面的划痕、漏水、飞边痛点。将定制化视觉模型直接部署至Jetson边缘盒子。<br><br>
+            <strong>实测指标：</strong>测试数据集精度达98%+，毫秒级响应，旁路拦截不拖慢主线节拍。<br><br>
+            <span class="text-xs text-gray-500">（实际产线表现以贵厂真实数据POC验证为准）</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 贰 | 极速现场诊断服务 -->
+  <section id="service" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">贰</span>
+        <h2 class="text-4xl font-bold mt-4">极速现场诊断服务</h2>
+        <p class="text-xl text-gray-600 mt-3">喝杯茶的功夫，方案到手</p>
+      </div>
+      <div class="max-w-4xl mx-auto bg-white p-12 rounded-3xl text-center">
+        <div class="text-6xl mb-8">🧠</div>
+        <h3 class="text-3xl font-semibold mb-6">独特的“当场出方”模式</h3>
+        <p class="text-xl text-gray-600 leading-relaxed">
+          我们带着自研的<strong>工业AI方案自动生成系统</strong>直奔现场。<br><br>
+          您只需口述痛点，喝杯茶时间，当场输出《车间定制化AI升级诊断报告》（含技术路线、硬件选型、ROI预估）。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 叁 | 为什么选择我们 -->
+  <section id="why" class="py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">叁</span>
+        <h2 class="text-4xl font-bold mt-4">为什么选择 EdgeOptima 边缘优控？</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-10">
+        <div class="text-center">
+          <div class="text-6xl mb-6">🛠️</div>
+          <h3 class="font-semibold text-2xl mb-4">20年系统架构底蕴</h3>
+          <p class="text-gray-600">懂算法，更懂工厂真实环境。让AI在恶劣车间永不宕机、无缝对接MES/ERP。</p>
+        </div>
+        <div class="text-center">
+          <div class="text-6xl mb-6">🏭</div>
+          <h3 class="font-semibold text-2xl mb-4">依托数据标注园</h3>
+          <p class="text-gray-600">与上游标注公司深度绑定，免去高昂数据成本，用底价开启试错。</p>
+        </div>
+        <div class="text-center">
+          <div class="text-6xl mb-6">💰</div>
+          <h3 class="font-semibold text-2xl mb-4">政策红利全程协助</h3>
+          <p class="text-gray-600">落地后协助申报AI示范场景专项（最高可达200万，具体以当期文件为准）。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 小案例 -->
+  <section class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">已落地真实反馈</h2>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-gray-50 p-8 rounded-3xl">
+          <p class="italic text-gray-700">"POC后废品率明显下降，调机师傅终于可以喘口气了。"</p>
+          <div class="mt-6 text-sm text-gray-500">——东莞某年产值1.1亿注塑厂 厂长</div>
+        </div>
+        <div class="bg-gray-50 p-8 rounded-3xl">
+          <p class="italic text-gray-700">"当场出的报告非常专业，ROI预估很靠谱，已经安排第二轮测试。"</p>
+          <div class="mt-6 text-sm text-gray-500">——佛山某五金代工厂 生产总监</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 创始人头像（已改成本地相对路径） -->
+  <section class="py-24 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <img src="avatar.png" alt="创始人董总" class="w-40 h-40 mx-auto rounded-2xl shadow-xl mb-8 object-cover border-4 border-white">
+      <h2 class="text-4xl font-bold mb-6">创始人：董总</h2>
+      <div class="prose prose-lg mx-auto max-w-3xl text-left">
+        <p>拥有20年大型企业级IT系统架构经验的老兵，专注工业级AI边缘侧落地。2026年入驻东莞万江数据标注产业园，主打“边缘侧空投”战术，用最务实的系统工程经验，帮助中型工厂以极低成本跨越智能化鸿沟。</p>
+        <p class="mt-4">我懂AI，但我更懂如何让AI在你们的车间里真正干活。</p>
+      </div>
+      <div class="mt-12 text-gray-500">📍 办公地址：东莞市万江街道坝头数据标注产业园</div>
+    </div>
+  </section>
+
+  <!-- 联系CTA + 表单 + 经营范围 -->
+  <section id="contact" class="py-24 bg-[#0A2540] text-white">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-4xl font-bold mb-6">准备好用低成本开启智能化试错了吗？</h2>
+      <form class="max-w-md mx-auto bg-white/10 backdrop-blur-md p-8 rounded-3xl">
+        <input type="text" placeholder="董天文" class="w-full mb-4 px-6 py-4 rounded-2xl bg-white/20 placeholder:text-white/60 focus:outline-none">
+        <input type="tel" placeholder="联系电话13268686581" class="w-full mb-4 px-6 py-4 rounded-2xl bg-white/20 placeholder:text-white/60 focus:outline-none">
+        <select class="w-full mb-6 px-6 py-4 rounded-2xl bg-white/20 focus:outline-none text-white">
+          <option value="">主要痛点（可多选）</option>
+          <option>注塑废品率高</option>
+          <option>调机依赖老师傅</option>
+          <option>质检人力成本高</option>
+          <option>其他</option>
+        </select>
+        <button type="submit" class="w-full bg-white text-[#0A2540] py-5 rounded-3xl font-semibold text-xl">提交 → 立即预约现场诊断</button>
+      </form>
+
+      <div class="mt-12 flex flex-col items-center gap-4 text-sm">
+        <a href="tel:你的手机号" class="flex items-center gap-3">📞 创始人直通车：13268686581</a>
+        <a href="https://wa.me/dong_tian_wen" class="flex items-center gap-3">💬 微信 / WhatsApp：dong_tian_wen</a>
+      </div>
+
+      <div class="mt-16 bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl text-left max-w-3xl mx-auto text-sm">
+        <h4 class="font-semibold text-orange-400 mb-4">经营范围</h4>
+        <p class="leading-relaxed text-gray-200">
+          人工智能技术开发；人工智能算法开发；机器视觉技术开发；工业视觉检测系统集成服务；计算机软件开发；软件销售；技术服务、技术开发、技术咨询、技术转让、技术推广；数据处理和存储支持服务；工业互联网数据服务；计算机硬件及辅助设备销售；货物进出口、技术进出口。<br>
+          <span class="text-xs opacity-75 block mt-4">(依法须经批准的项目，经相关部门批准后方可开展经营活动)</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-black text-white py-12 text-center text-sm">
+    <div>© 2026 EdgeOptima 边缘优控科技有限公司 | 政策支持：东莞市万江街道经济发展局</div>
+  </footer>
+
+  <script>
+    tailwind.config = { content: ["*"] }
+  </script>
+</body>
+</html>
