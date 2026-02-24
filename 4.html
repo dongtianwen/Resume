@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EdgeVision 视觉智能 | 工业AI边缘落地先锋</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .hero-bg { 
+      background: linear-gradient(rgba(10,37,64,0.88), rgba(10,37,64,0.88)), 
+                  url('https://picsum.photos/id/1015/1920/1080') center/cover no-repeat; 
+    }
+    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-12px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
+  </style>
+</head>
+<body class="font-sans bg-white text-gray-900">
+
+  <!-- 导航栏 -->
+  <nav class="bg-white border-b sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-4xl">🔹</span>
+        <div>
+          <span class="text-3xl font-bold tracking-tight text-[#0A2540]">EdgeVision</span>
+          <span class="block text-sm text-gray-500 -mt-1">视觉智能</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-8 text-sm">
+        <a href="#solutions" class="hover:text-orange-600 font-medium">解决方案</a>
+        <a href="#leverage" class="hover:text-orange-600 font-medium">单兵杠杆</a>
+        <a href="#about" class="hover:text-orange-600 font-medium">关于我们</a>
+        <a href="#contact" class="bg-orange-600 hover:bg-orange-700 text-white px-7 py-3 rounded-full font-medium">免费咨询 POC</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero-bg h-screen flex items-center text-white">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-sm mb-8">
+        免费咨询 POC | 东莞数据标注产业园入驻企业
+      </div>
+      
+      <h1 class="text-5xl md:text-7xl font-bold leading-tight mb-6">
+        20年资深 IT 架构专家<br>工业 AI 边缘落地先锋
+      </h1>
+      
+      <p class="text-2xl md:text-3xl text-gray-200 mb-8 max-w-4xl mx-auto">
+        机器视觉算法开发 · 边缘部署系统集成 · 传统产线智能化改造<br>
+        标注数据快速变现 · 注塑/五金工厂专属解决方案
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+        <a href="#contact" class="bg-white text-[#0A2540] hover:bg-gray-100 px-10 py-5 rounded-2xl text-xl font-semibold inline-flex items-center justify-center gap-3">
+          立即预约免费 POC 现场打样
+        </a>
+        <a href="https://www.dg.gov.cn/dgwjjd/" target="_blank" class="border-2 border-white hover:bg-white hover:text-[#0A2540] px-10 py-5 rounded-2xl text-xl font-semibold inline-flex items-center justify-center gap-3">
+          查看万江园区政策红利
+        </a>
+      </div>
+
+      <div class="text-lg opacity-90">
+        单兵爆破战术 · 低试错成本 · 快速撕开制造业 AI 缺口
+      </div>
+    </div>
+  </section>
+
+  <!-- 工业 AI 全栈解决方案 -->
+  <section id="solutions" class="py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">⚙️</span>
+        <h2 class="text-4xl font-bold mt-4">工业 AI 全栈解决方案</h2>
+        <p class="text-xl text-gray-600 mt-3 max-w-md mx-auto">从标注数据到边缘计算，一站式帮中小型工厂落地真 AI。</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Card 1 -->
+        <div class="bg-white p-8 rounded-3xl card-hover">
+          <div class="text-5xl mb-6">📸</div>
+          <h3 class="text-2xl font-semibold mb-4">机器视觉检测系统</h3>
+          <p class="text-gray-600">注塑/五金缺陷检测（划痕、漏水、飞边等）· 98%+ 实验室基准精度 · 基于 Jetson 边缘盒子实时部署。</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="bg-white p-8 rounded-3xl card-hover">
+          <div class="text-5xl mb-6">🧠</div>
+          <h3 class="text-2xl font-semibold mb-4">AI 算法开发与微调</h3>
+          <p class="text-gray-600">YOLO/RT-DETR 定制训练 · Few-shot (小样本) 快速适配工厂边缘场景 · 专属承接数据标注公司下游落地需求。</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="bg-white p-8 rounded-3xl card-hover">
+          <div class="text-5xl mb-6">🚀</div>
+          <h3 class="text-2xl font-semibold mb-4">边缘智能系统无缝集成</h3>
+          <p class="text-gray-600">不破坏原有产线 · 支持 Modbus/OPC UA 等主流工控协议与 PLC 毫秒级联动 · 极速接入现有 MES 系统 · 政策补贴全程协助。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 单兵杠杆 -->
+  <section id="leverage" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">🏭</span>
+        <h2 class="text-4xl font-bold mt-4">单兵也能干翻巨头的 3 大杠杆</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-10">
+        <div class="text-center">
+          <div class="text-6xl mb-6">🎯</div>
+          <h3 class="font-semibold text-2xl mb-3">精准赋能腰部工厂</h3>
+          <p class="text-gray-600">专为 5000 万-2 亿产值的注塑/五金厂打造 · 极轻量化架构 · 决策链短，老板 1 周拍板，当月见效。</p>
+        </div>
+        <div class="text-center">
+          <div class="text-6xl mb-6">📍</div>
+          <h3 class="font-semibold text-2xl mb-3">数据标注园前哨站</h3>
+          <p class="text-gray-600">零成本接触核心缺陷特征数据 · 与园区头部标注企业深度绑定，打通“数据->算法->车间”全链路。</p>
+        </div>
+        <div class="text-center">
+          <div class="text-6xl mb-6">💰</div>
+          <h3 class="font-semibold text-2xl mb-3">政策红利全额吃透</h3>
+          <p class="text-gray-600">协助申报数据集/模型补贴（最高可达 200 万） + 争取 AI 示范场景专项奖励。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心应用场景 -->
+  <section class="py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-5xl">📉</span>
+        <h2 class="text-4xl font-bold mt-4">核心应用场景与实测指标</h2>
+        <p class="text-gray-600 mt-3">(注：基于核心算法跑通的边缘侧系统级验证)</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div class="bg-white p-8 rounded-3xl">
+          <h4 class="font-semibold text-xl mb-4">注塑件缺陷拦截</h4>
+          <p class="text-gray-600">视觉检测 + 独立边缘部署，测试环境下不良品拦截响应达毫秒级。</p>
+        </div>
+        <div class="bg-white p-8 rounded-3xl">
+          <h4 class="font-semibold text-xl mb-4">五金件自动复检</h4>
+          <p class="text-gray-600">AI 算法微调 + 机械手集成联动，可大幅释放质检人力，提升 OEE (设备综合效率)。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 创始人 -->
+  <section id="about" class="py-24">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <div class="text-5xl mb-8">👤</div>
+      <h2 class="text-4xl font-bold mb-8">创始人：我是谁</h2>
+      <div class="prose prose-lg mx-auto text-left max-w-3xl">
+        <p>我是拥有 20 年深厚企业级系统架构经验的老兵，现专注工业级 AI 边缘侧落地。2026 年带枪入驻东莞数据标注产业园，主打“边缘侧空投”战术：用最成熟的系统工程经验，结合前沿机器视觉，帮助中型工厂以极低成本跨越智能化鸿沟。</p>
+        <p class="mt-6">我懂 AI 算法，但我更懂如何让 AI 算法稳定运行在你们车间的恶劣环境里。</p>
+      </div>
+      <div class="mt-12 text-gray-500">📍 办公地址：东莞市万江街道坝头数据标注产业园</div>
+    </div>
+  </section>
+
+  <!-- 联系 CTA -->
+  <section id="contact" class="py-24 bg-[#0A2540] text-white">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-4xl font-bold mb-6">准备好落地工业 AI 了吗？</h2>
+      <p class="text-2xl mb-12 opacity-90">首单 POC 免费打样 · 1 周出初步模型 · 园区随时喝茶面谈</p>
+      
+      <div class="space-y-6 max-w-md mx-auto">
+        <a href="tel:你的手机号" class="block bg-white text-[#0A2540] py-6 rounded-3xl text-xl font-semibold flex items-center justify-center gap-3">
+          📞 董总 (创始人直通车)：13268686581
+        </a>
+        <a href="https://wa.me/你的香港WhatsApp" class="block bg-white text-[#0A2540] py-6 rounded-3xl text-xl font-semibold flex items-center justify-center gap-3">
+          🇭🇰 香港微信 / WhatsApp：你的账号
+        </a>
+        <p class="text-sm opacity-75 mt-8">园区入驻及场地政策可联系：赖先生 0769-22278988</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-black text-white py-12 text-center text-sm">
+    <div>© 2026 EdgeVision 视觉智能科技有限公司 | 经营范围已工商备案</div>
+    <div class="mt-2">政策支持：东莞市万江街道经济发展局</div>
+    <div class="mt-6 text-xs max-w-2xl mx-auto opacity-75">
+      附：企业法定经营范围：<br>
+      人工智能技术开发；人工智能算法开发；机器视觉技术开发；工业视觉检测系统集成服务；计算机软件开发；软件销售；技术服务、咨询与推广；数据处理和存储支持服务；工业互联网数据服务；计算机硬件销售；货物及技术进出口。
+    </div>
+  </footer>
+
+  <script>
+    tailwind.config = { content: ["*"] }
+  </script>
+</body>
+</html>
